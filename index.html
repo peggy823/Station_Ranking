@@ -82,7 +82,17 @@
     border-radius: 0.3em 0 0 0.3em;
     transition: background 0.3s;
     }
+    .bar-container.editing {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5em;
+    }
 
+    .bar-container.editing .bar-row {
+        width: 50%;
+        box-sizing: border-box;
+        padding-right: 1em;
+    }
     .value {
     width: 10%;
     text-align: left;
@@ -154,63 +164,64 @@
         }
 
         function renderChart() {
-        chart.innerHTML = "";
+          chart.innerHTML = "";
 
-        if (!editing) {
-        data.sort((a, b) => b.value - a.value);
+          chart.classList.toggle("editing", editing); // 加這行！
+
+          if (!editing) {
+            data.sort((a, b) => b.value - a.value);
+          }
+
+          const max = Math.max(...data.map(d => d.value || 1));
+
+          data.forEach((item) => {
+            const row = document.createElement("div");
+            row.className = "bar-row";
+
+            const label = document.createElement("div");
+            label.className = "label";
+            label.textContent = item.name;
+
+            if (editing) {
+              const input = document.createElement("input");
+              input.type = "number";
+              input.className = "edit-input";
+              input.value = item.value;
+              input.oninput = (e) => {
+                item.value = parseInt(e.target.value) || 0;
+                localStorage.setItem("stationData", JSON.stringify(data));
+              };
+              row.appendChild(label);
+              row.appendChild(input);
+            } else {
+              const barWrapper = document.createElement("div");
+              barWrapper.className = "bar-wrapper";
+
+              const barFill = document.createElement("div");
+              barFill.className = "bar-fill";
+              barFill.style.width = `${(item.value / max) * 100}%`;
+              barFill.style.backgroundColor = getOrangeShade(item.value, max);
+
+              barWrapper.appendChild(barFill);
+
+              const value = document.createElement("div");
+              value.className = "value";
+              value.textContent = item.value.toLocaleString();
+
+              const img = document.createElement("img");
+              img.className = "icon";
+              img.src = `badge/${encodeURIComponent(item.name)}.svg`;
+              img.alt = item.name;
+
+              row.appendChild(label);
+              row.appendChild(barWrapper);
+              row.appendChild(value);
+              row.appendChild(img);
+            }
+
+            chart.appendChild(row);
+          });
         }
-
-        const max = Math.max(...data.map(d => d.value || 1));
-
-        data.forEach((item) => {
-        const row = document.createElement("div");
-        row.className = "bar-row";
-
-        const label = document.createElement("div");
-        label.className = "label";
-        label.textContent = item.name;
-
-        if (editing) {
-            const input = document.createElement("input");
-            input.type = "number";
-            input.className = "edit-input";
-            input.value = item.value;
-            input.oninput = (e) => {
-            item.value = parseInt(e.target.value) || 0;
-            // ← 即時存入 localStorage
-            localStorage.setItem("stationData", JSON.stringify(data));
-            };
-            row.appendChild(label);
-            row.appendChild(input);
-        } else {
-            const barWrapper = document.createElement("div");
-            barWrapper.className = "bar-wrapper";
-
-            const barFill = document.createElement("div");
-            barFill.className = "bar-fill";
-            barFill.style.width = `${(item.value / max) * 100}%`;
-            barFill.style.backgroundColor = getOrangeShade(item.value, max);
-
-            barWrapper.appendChild(barFill);
-
-            const value = document.createElement("div");
-            value.className = "value";
-            value.textContent = item.value.toLocaleString();
-
-            const img = document.createElement("img");
-            img.className = "icon";
-            img.src = `badge/${encodeURIComponent(item.name)}.svg`;
-            img.alt = item.name;
-
-            row.appendChild(label);
-            row.appendChild(barWrapper);
-            row.appendChild(value);
-            row.appendChild(img);
-        }
-
-        chart.appendChild(row);
-        });
-    }
 
     editBtn.onclick = () => {
         editing = !editing;
