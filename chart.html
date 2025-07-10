@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>氣象站挑選排行榜</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html {
+      font-size: clamp(26px, 2.0vw, 30px)
+    }
+
+    html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: "Segoe UI", sans-serif;
+    background: white;
+    }
+
+    #scaleWrapper {
+    transform-origin: top left;
+    width: 1080px;  /* 預設設計寬度，可依實際需求調整 */
+    height: 1440px; /* 預設設計高度，可依實際需求調整 */
+    }
+
+    h2 {
+    text-align: center;
+    font-size: 2.2em;
+    margin: 0.4em 0 0.6em;
+    color: #444;
+    border-bottom: 2px solid #ccc;
+    display: inline-block;
+    padding-bottom: 0.1em;
+    }
+
+    .bar-container {
+    width: 100%;
+    padding: 0 0%;
+    padding-left: 8%;
+    padding-right: 5%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+    box-sizing: border-box;
+    }
+
+    .bar-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    line-height: 1;
+    overflow: visible;
+    }
+
+    .label {
+    width: 30%;
+    min-width: 8em;
+    text-align: right;
+    margin-right: 1%;
+    overflow: visible;
+    font-size: 1em;
+    color: #333;
+    white-space: nowrap;
+    margin-right: 1%;
+    }
+
+    .bar-wrapper {
+    width: 60%;
+    height: 1.4em;
+    background: #f4f4f4;
+    border-radius: 0.3em;
+    position: relative;
+    overflow: hidden;
+    margin-right: 1%;
+    }
+
+    .bar-fill {
+    height: 100%;
+    display: block;
+    border-radius: 0.3em 0 0 0.3em;
+    transition: background 0.3s;
+    }
+
+    .value {
+    width: 10%;
+    text-align: left;
+    font-size: 1em;
+    color: #C4510F;
+    font-weight: bold;
+    margin-right: 0.5em;
+    }
+
+    .icon {
+    width: 1.8em;
+    height: 1.8em;
+    flex-shrink: 0;
+    }
+
+    #editBtn {
+    position: fixed;
+    background-color: none;
+    top: 2em;
+    right: 2em;
+    color: white;
+    border-radius: 999px;
+    font-size: 1em;
+    z-index: 10;
+    }
+
+    #editBtn:hover {
+    background: #0056b3;
+    }
+
+    .edit-input {
+    width: 5em;
+    font-size: 1em;
+    padding: 0.3em;
+    }
+
+
+
+  </style>
+</head>
+<body>
+  <div id="scaleWrapper">
+    <h2>氣象站挑選排行榜</h2>
+    <div class="bar-container" id="chart"></div>
+    <button id="editBtn">✏️</button>
+
+    <script>
+        const stationNames = [
+        "鞍部氣象站", "竹子湖氣象站", "彭佳嶼氣象站", "東吉島氣象站", "玉山氣象站", "基隆氣象站",
+        "後龍氣象站", "澎湖氣象站", "恆春氣象站", "宜蘭氣象站", "花蓮氣象站", "金門氣象站",
+        "嘉義氣象站", "古坑氣象站", "日月潭氣象站", "阿里山氣象站", "臺東氣象站", "高雄氣象站",
+        "臺中氣象站", "新竹氣象站", "蘭嶼氣象站", "新北氣象站", "新屋氣象站", "南區氣象中心",
+        "馬祖氣象站", "田中氣象站", "蘇澳氣象站", "臺東氣象站大武站區",
+        "臺東氣象站成功站區", "梧棲氣象站", "臺北氣象站淡水站區", "臺北天文站(臺北站)"
+        ];
+
+        let data = JSON.parse(localStorage.getItem("stationData")) || stationNames.map(name => ({ name, value: 0 }));
+        let editing = false;
+
+        const chart = document.getElementById("chart");
+        const editBtn = document.getElementById("editBtn");
+
+        function getOrangeShade(value, max) {
+            const minLightness = 40;
+            const maxLightness = 90;
+            const lightness = max === 0 ? maxLightness :
+            maxLightness - ((value / max) * (maxLightness - minLightness));
+            return `hsl(24, 90%, ${lightness}%)`;
+        }
+
+        function renderChart() {
+        chart.innerHTML = "";
+
+        if (!editing) {
+        data.sort((a, b) => b.value - a.value);
+        }
+
+        const max = Math.max(...data.map(d => d.value || 1));
+
+        data.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = item.name;
+
+        if (editing) {
+            const input = document.createElement("input");
+            input.type = "number";
+            input.className = "edit-input";
+            input.value = item.value;
+            input.oninput = (e) => {
+            item.value = parseInt(e.target.value) || 0;
+            // ← 即時存入 localStorage
+            localStorage.setItem("stationData", JSON.stringify(data));
+            };
+            row.appendChild(label);
+            row.appendChild(input);
+        } else {
+            const barWrapper = document.createElement("div");
+            barWrapper.className = "bar-wrapper";
+
+            const barFill = document.createElement("div");
+            barFill.className = "bar-fill";
+            barFill.style.width = `${(item.value / max) * 100}%`;
+            barFill.style.backgroundColor = getOrangeShade(item.value, max);
+
+            barWrapper.appendChild(barFill);
+
+            const value = document.createElement("div");
+            value.className = "value";
+            value.textContent = item.value.toLocaleString();
+
+            const img = document.createElement("img");
+            img.className = "icon";
+            img.src = `badge/${encodeURIComponent(item.name)}.svg`;
+            img.alt = item.name;
+
+            row.appendChild(label);
+            row.appendChild(barWrapper);
+            row.appendChild(value);
+            row.appendChild(img);
+        }
+
+        chart.appendChild(row);
+        });
+    }
+
+    editBtn.onclick = () => {
+        editing = !editing;
+        editBtn.textContent = editing ? "✅ 儲存" : "✏️";
+        if (!editing) {
+        // 儲存整包 data
+        localStorage.setItem("stationData", JSON.stringify(data));
+        }
+        renderChart();
+    };
+
+    function scaleToFitWindow() {
+    const wrapper = document.getElementById("scaleWrapper");
+    const scaleX = window.innerWidth / 1080;
+    const scaleY = window.innerHeight / 1920;
+    const scale = Math.min(scaleX, scaleY);
+    wrapper.style.transform = `scale(${scale})`;
+    }
+
+    window.addEventListener("resize", scaleToFitWindow);
+    scaleToFitWindow();
+
+    renderChart(); // 畫出初始圖表
+    </script>
+
+  </div>
+</body>
+</html>
