@@ -36,14 +36,35 @@
     }
 
     .bar-container {
-    width: 100%;
-    padding: 0 0%;
-    padding-left: 8%;
-    padding-right: 5%;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3em;
-    box-sizing: border-box;
+      width: 100%;
+      padding-left: 8%;
+      padding-right: 5%;
+      box-sizing: border-box;
+    }
+
+    /* 非編輯模式（單欄條狀圖） */
+    .bar-container:not(.editing) {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3em;
+    }
+
+    /* 編輯模式下切成兩欄 */
+    .bar-container.editing {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: wrap;
+      gap: 0.6em;
+    }
+
+    /* 每列佔寬 50% */
+    .bar-container.editing .bar-row {
+      width: 40%;
+      display: flex;
+      align-items: center;
+      padding-right: 1em;
+      margin-bottom: 0.4em;
+      box-sizing: border-box;
     }
 
     .bar-row {
@@ -67,7 +88,7 @@
     }
 
     .bar-wrapper {
-    width: 60%;
+    width: 70%;
     height: 1.4em;
     background: #f4f4f4;
     border-radius: 0.3em;
@@ -82,17 +103,8 @@
     border-radius: 0.3em 0 0 0.3em;
     transition: background 0.3s;
     }
-    .bar-container.editing {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5em;
-    }
 
-    .bar-container.editing .bar-row {
-        width: 50%;
-        box-sizing: border-box;
-        padding-right: 1em;
-    }
+
     .value {
     width: 10%;
     text-align: left;
@@ -214,9 +226,10 @@
               img.alt = item.name;
 
               row.appendChild(label);
+              row.appendChild(img);
               row.appendChild(barWrapper);
               row.appendChild(value);
-              row.appendChild(img);
+              
             }
 
             chart.appendChild(row);
